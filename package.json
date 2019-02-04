@@ -1,0 +1,72 @@
+{
+	"name": "vscode-wordcount-leeopop",
+	"displayName": "vscode-wordcount-leeopop",
+	"description": "Word count utility",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.30.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title": "Word count configuration",
+			"properties": {
+				"vscode-wordcount-leeopop.whiteSpace": {
+					"type": "string",
+					"default": "\\s",
+					"description": "Regular expression for a single space character."
+				},
+				"vscode-wordcount-leeopop.newLine": {
+					"type": "string",
+					"default": "\\n",
+					"description": "Regular expression for a single newline character."
+				},
+				"vscode-wordcount-leeopop.characterCount": {
+					"type": "string",
+					"enum": [
+						"character",
+						"byte"
+					],
+					"default": "character",
+					"description": "character: count any unicode character into 1. byte: count bytes required to be stored in utf-8."
+				},
+				"vscode-wordcount-leeopop.documentPriority": {
+					"type": ["number", "null"],
+					"default": null,
+					"description": "Priority of document statistics"
+				},
+				"vscode-wordcount-leeopop.selectionPriority": {
+					"type": ["number", "null"],
+					"default": null,
+					"description": "Priority of selection statistics"
+				},
+				"vscode-wordcount-leeopop.debug": {
+					"type": "boolean",
+					"default": false,
+					"description": "Debug on"
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"test": "npm run compile && node ./node_modules/vscode/bin/test"
+	},
+	"devDependencies": {
+		"typescript": "^3.1.4",
+		"vscode": "^1.1.25",
+		"tslint": "^5.8.0",
+		"@types/node": "^8.10.25",
+		"@types/mocha": "^2.2.42"
+	}
+}
