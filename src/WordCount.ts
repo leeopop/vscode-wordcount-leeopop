@@ -153,6 +153,7 @@ export class WordCount {
         this._disposables.push(vscode.workspace.onDidCloseTextDocument(
             (event) => {
                 // Clear the document cache
+                console.log("Document closed. Clear the cache for the document.");
                 this._cache.delete(event.uri);
             }
         ));
@@ -260,6 +261,7 @@ export class WordCount {
     toggleDocument() {
         this._enableDocument = !this._enableDocument;
         // We have to clear the cache
+        console.log("Toggling document stat requires clearing the cache.");
         this._cache.clear();
         this.update_display();
     }
