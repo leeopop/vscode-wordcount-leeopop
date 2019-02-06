@@ -1,10 +1,30 @@
 {
 	"name": "vscode-wordcount-leeopop",
-	"displayName": "vscode-wordcount-leeopop",
-	"description": "Word count utility",
-	"version": "0.0.1",
+	"displayName": "wc for VSCode",
+	"description": "wc equivalent functionality for a whole document and selected areas",
+	"version": "0.0.2",
 	"engines": {
 		"vscode": "^1.30.0"
+	},
+	"keywords": [
+		"word",
+		"count",
+		"selection",
+		"wc"
+	],
+	"readme": "README.md",
+	"publisher": "leeopop",
+	"author": {
+		"name": "Keunhong Lee"
+	},
+	"license": "MIT",
+	"homepage": "https://github.com/leeopop/vscode-wordcount-leeopop/blob/master/README.md",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/leeopop/vscode-wordcount-leeopop"
+	},
+	"bugs": {
+		"url": "https://github.com/leeopop/vscode-wordcount-leeopop/issues"
 	},
 	"categories": [
 		"Other"
@@ -14,6 +34,15 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"commands": [{
+				"command": "vscode-wordcount-leeopop.toggleSelection",
+				"title": "Toggle to enable/disable selection statistics"
+			},
+			{
+				"command": "vscode-wordcount-leeopop.toggleDocument",
+				"title": "Toggle to enable/disable document statistics"
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "Word count configuration",
@@ -51,6 +80,16 @@
 					"type": "boolean",
 					"default": false,
 					"description": "Debug on"
+				},
+				"vscode-wordcount-leeopop.defaultSelectionToggle": {
+					"type": "boolean",
+					"default": true,
+					"description": "Initial state of selection statistics toggle"
+				},
+				"vscode-wordcount-leeopop.defaultDocumentToggle": {
+					"type": "boolean",
+					"default": true,
+					"description": "Initial state of document statistics toggle"
 				}
 			}
 		}

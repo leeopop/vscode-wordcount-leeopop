@@ -1,65 +1,46 @@
-# vscode-wordcount-leeopop README
+# Word count
 
-This is the README for your extension "vscode-wordcount-leeopop". After writing up a brief description, we recommend including the following sections.
+## What is this
 
-## Features
+This tool does "wc" of the whole document and also does on the selections.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+This tool is as simple as that of Linux tool "wc", i.e. any non-space sequence is considered as a word.
+For example, "a:b a-b" has two words.
 
-For example if there is an image subfolder under your extension project workspace:
+This tool supports two method of counting characters.
+It counts either the number of characters or the number of bytes needed to encode in UTF-8.
 
-\!\[feature X\]\(images/feature-x.png\)
+It supports incremental update, so that frequent update on a large text document will not cause serious performance degradation.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+You may click on the status bar to toggle the document stat or the selection stat.
 
-## Requirements
+## Internal structure
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### config.ts
 
-## Extension Settings
+Shared constants.
+Currently, there is only one.
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+### WordCount.ts
 
-For example:
+Main application logic.
 
-This extension contributes the following settings:
+1. WCStat: a set of numbers for a WC statistics. Support add, sub, and eq operation.
+        1. WCStat.wordCount: Do wc and store the result in it (overwrite). This operation is parameterized by:
+                1. Input string: string
+                1. RegExp for a single space character (including newline)
+                1. RegExp for a single newline character (only a newline). For example, newline for "\\r\\n" should be "\\n". Otherwise, the "\\r\\n" will be counted as two newline characters.
+                1. Encoder object to count actual bytes. undefined represents that the number of characters will be counted.
+        1. WCStat stores the number of bytes and the number of characters in separated spaces. Num of characters is always calculated while num of bytes is calculated when needed.
+1. DocumentWCState: stores per-document cache for incremental update. Each document is identified by its URI. Thus, a single document opened by multiple editors will have only a single document cache.
+1. WordCount: A singleton object representing this extension.
+        1. update_display updates the statistics according to WordCount's internal state. It automatically allocates new document cache so that it can be invoked almost everywhere (actually, update_statistics does it and update_display invokes it).
+        1. update_statistics updates the statistics of a document. It does incremental update when the hint is given.
+        1. toggleDocument/Selection: enable or disable each functionality.
+        1. update_config updates configuration and clears the document cache. Thus, the callee should determine whether the update is really needed. Also, the callee should update this._currentConfiguration before calling it.
+        1. The selection statistics is not cached.
+1. Any disposable objects are inserted into this._disposables. However, dynamic objects (e.g. statusBarItem) are manually disposed in this.dispose().
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+### extension.ts
 
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+It does command mapping.

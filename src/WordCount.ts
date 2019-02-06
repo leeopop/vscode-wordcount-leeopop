@@ -105,6 +105,8 @@ export class WordCount {
     private _spaceRegExp: RegExp;
     private _lineRegExp: RegExp;
     private _isDebug: boolean;
+    private _enableSelection: boolean;
+    private _enableDocument: boolean;
 
     constructor() {
         // States
@@ -117,7 +119,8 @@ export class WordCount {
         this._spaceRegExp = new RegExp("");
         this._lineRegExp = new RegExp("");
         this._isDebug = false;
-
+        this._enableDocument = true;
+        this._enableSelection = true;
 
         // Init functions
         this.update_config();
@@ -154,6 +157,13 @@ export class WordCount {
             }
         ));
 
+        this._disposables.push(vscode.workspace.onDidSaveTextDocument(
+            (_) => {
+                // TODO Consider clearing the incremental cache on save.
+                // this._cache.delete(event.uri);
+            }
+        ));
+
         this._disposables.push(vscode.workspace.onDidOpenTextDocument(
             (event) => {
                 // Clear the document cache
@@ -181,47 +191,77 @@ export class WordCount {
             return;
         }
         let document = editor.document;
-        let selectionStat = new WCStat();
-        let tempStat = new WCStat();
+        let count: number;
 
-        let selections = editor.selections;
-        selections.forEach((selection) => {
-            let selectedText = document.getText(selection);
-            tempStat.wordCount(selectedText, this._spaceRegExp, this._lineRegExp, this._encoder);
-            selectionStat.add(tempStat);
-        });
+        if (this._enableSelection) {
+            // Selection stat is enabled
+            let selectionStat = new WCStat();
+            let tempStat = new WCStat();
 
-        let count;
-        if (selectionStat.numCharacters > 0) {
-            if (this._encoder === undefined) {
-                count = selectionStat.numCharacters;
+            let selections = editor.selections;
+            selections.forEach((selection) => {
+                let selectedText = document.getText(selection);
+                tempStat.wordCount(selectedText, this._spaceRegExp, this._lineRegExp, this._encoder);
+                selectionStat.add(tempStat);
+            });
+
+            if (selectionStat.numCharacters > 0) {
+                if (this._encoder === undefined) {
+                    count = selectionStat.numCharacters;
+                } else {
+                    count = selectionStat.numBytes;
+                }
+                let s = "";
+                if (selections.length > 1) {
+                    s = "s";
+                }
+                this._selectionStatusBarItem.text = `wc (sel): ( ${selectionStat.numLines} | ${selectionStat.numWords} | ${count} )`;
+                if (selections.length > 1) {
+                    this._selectionStatusBarItem.text += ` (${selections.length} selection${s})`;
+                }
+                this._selectionStatusBarItem.show();
             } else {
-                count = selectionStat.numBytes;
+                this._selectionStatusBarItem.hide();
             }
-            let s = "";
-            if (selections.length > 1) {
-                s = "s";
+        } else {
+            // selection stat is disabled.
+            if (editor.selection.isEmpty) {
+                this._selectionStatusBarItem.hide();
+            } else {
+                this._selectionStatusBarItem.text = "wc (sel): ( - )";
+                this._selectionStatusBarItem.show();
             }
-            this._selectionStatusBarItem.text = `wc (selection): (${selectionStat.numLines} | ${selectionStat.numWords} | ${count}) (${selections.length} selection${s})`;
-            this._selectionStatusBarItem.show();
+        }
+
+        if (this._enableDocument) {
+            let cache = this._cache.get(document.uri);
+            while (cache === undefined) {
+                this.update_statistics(document);
+                cache = this._cache.get(document.uri);
+            }
+
+            if (this._encoder === undefined) {
+                count = cache.wcStat.numCharacters;
+            } else {
+                count = cache.wcStat.numBytes;
+            }
+            this._documentStatusBarItem.text = `wc (all): ( ${cache.wcStat.numLines} | ${cache.wcStat.numWords} | ${count} )`;
         } else {
-            this._selectionStatusBarItem.hide();
+            this._documentStatusBarItem.text = "wc (all): ( - )";
         }
-
-        let cache = this._cache.get(document.uri);
-        while (cache === undefined) {
-            this.update_statistics(document);
-            cache = this._cache.get(document.uri);
-        }
-
-        if (this._encoder === undefined) {
-            count = cache.wcStat.numCharacters;
-        } else {
-            count = cache.wcStat.numBytes;
-        }
-
-        this._documentStatusBarItem.text = `wc (document): (${cache.wcStat.numLines} | ${cache.wcStat.numWords} | ${count})`;
         this._documentStatusBarItem.show();
+    }
+
+    toggleSelection() {
+        this._enableSelection = !this._enableSelection;
+        this.update_display();
+    }
+
+    toggleDocument() {
+        this._enableDocument = !this._enableDocument;
+        // We have to clear the cache
+        this._cache.clear();
+        this.update_display();
     }
 
     update_statistics(document: vscode.TextDocument, hints?: vscode.TextDocumentContentChangeEvent[]) {
@@ -301,6 +341,8 @@ export class WordCount {
         let selPri = this._currentConfiguration.get<number>("selectionPriority");
 
         this._isDebug = this._currentConfiguration.get<boolean>("debug", true);
+        this._enableSelection = this._currentConfiguration.get<boolean>("defaultSelectionToggle", true);
+        this._enableDocument = this._currentConfiguration.get<boolean>("defaultDocumentToggle", true);
 
         let countMode = this._currentConfiguration.get<string>("characterCount");
         if (countMode === "character") {
@@ -315,6 +357,10 @@ export class WordCount {
         this._documentStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, docPri);
         this._selectionStatusBarItem.dispose();
         this._selectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, selPri);
+
+        this._selectionStatusBarItem.command = `${config.EXTENSION_NAME}.toggleSelection`;
+        this._documentStatusBarItem.command = `${config.EXTENSION_NAME}.toggleDocument`;
+
         this._documentStatusBarItem.tooltip = `Word count statistics for the whole document. (lines | words | ${countMode}s)`;
         this._selectionStatusBarItem.tooltip = `Word count statistics for the selection. (lines | words | ${countMode}s) (n selections)`;
 
