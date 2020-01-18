@@ -2,19 +2,23 @@
 
 ## What is this
 
-This tool does "wc" of the whole document and also does on the selections.
-
+This tool does "wc" of the whole document and also on the selections.
 This tool is as simple as that of Linux tool "wc", i.e. any non-space sequence is considered as a word.
 For example, "a:b a-b" has two words.
 
-This tool supports two method of counting characters.
-It counts either the number of characters or the number of bytes needed to encode in UTF-8.
+This tool supports two methods of counting characters.
+It counts either the number of characters or the number of bytes in the UTF-8 encoding.
 
 It supports incremental update, so that frequent update on a large text document will not cause serious performance degradation.
 
-You may click on the status bar to toggle the document stat or the selection stat.
+You may click on the status bar to toggle the whole document statistics or the selection statistics.
 
-## Internal structure
+This tool supports multiple segments of selected areas (by Alt-drag).
+
+## Internal structure (for developers)
+
+This information may be helpful for those who want to modify/extend this extension.
+
 
 ### config.ts
 
@@ -43,4 +47,4 @@ Main application logic.
 
 ### extension.ts
 
-It does command mapping.
+It registers commands and maps the commands to the implementation in 'extension.ts'.
